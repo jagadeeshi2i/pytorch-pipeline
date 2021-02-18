@@ -1,0 +1,29 @@
+name: Download File
+inputs:
+  - {name: Url, type: URI}
+  - {name: Input, type: String}
+outputs:
+- {name: Output}
+metadata:
+  annotations:
+    author: Alexey Volkov <alexey.volkov@ark-kun.com>
+implementation:
+  container:
+    image: mwendler/wget
+    command:
+    - sh
+    - -exc
+    - |
+      url="$0"
+      input_path="$1"
+      output_path="$2"
+
+      mkdir -p "$output_path"
+      if [[ -d "$input_path" ]]
+      then
+        cp -r $input_path/* $output_path
+      fi
+      wget "$url" -P "$output_path" --no-check-certificate
+    - inputValue: Url
+    - inputPath: Input
+    - outputPath: Output

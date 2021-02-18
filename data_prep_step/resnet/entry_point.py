@@ -7,7 +7,7 @@ import os
 from os import path
 import logging
 
-import data_prep.data_prep_step as dp_package
+import data_prep_step as dp_package
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -13,11 +13,16 @@ echo ++++ Building component images with tag=$images_tag
 
 MODEL=resnet
 
-for COMPONENT in training_step data_prep_step
-# for COMPONENT in training_step data_prep_step model_archiver_step
-for COMPONENT in model_archive_step
+# for COMPONENT in training_step data_prep_step
+for COMPONENT in training_step data_prep_step model_archive_step
+# for COMPONENT in model_archive_step
 do
-    cd ./$COMPONENT/$MODEL
+    if [ $COMPONENT = model_archive_step ]
+    then
+        cd ./$COMPONENT
+    else
+        cd ./$COMPONENT/$MODEL
+    fi
 
     full_image_name=jagadeeshj/$COMPONENT:$images_tag
 
@@ -31,14 +36,19 @@ do
     sed -e "s|__IMAGE_NAME__|$full_image_name|g" component_template.yaml > component.yaml
     cat component.yaml 
 
-    cd ../..
+    if [ $COMPONENT = model_archive_step ]
+    then
+        cd ../
+    else
+        cd ../../
+    fi
 done
 
 pwd
 echo
 echo Running pipeline compilation
 # python3 pipeline.py --target mp
-python3 pipeline.py --target kfp --model resnet
+python3 pipeline.py --target kfp --model $MODEL
 
 
 #echo 

@@ -44,7 +44,8 @@ else:
 
 data_prep_op = load_component_from_file(f"data_prep_step/{args.model}/component.yaml")
 train_model_op = load_component_from_file(f"training_step/{args.model}/component.yaml")
-
+list_item_op = load_component_from_file("file/component.yaml")
+download_op = load_component_from_file("web/component.yaml")
 model_archive_op = load_component_from_file("model_archive_step/component.yaml")
 # deploy_model_op = load_component_from_file("kfserving/component.yaml")
 list_item_op = load_component_from_url(
@@ -102,7 +103,27 @@ def train_imagenet_cnn_pytorch():
             .set_memory_limit("14Gi")
         ).apply(use_aws_secret('aws-secret', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY'))
 
-        model_archive_task = model_archive_op(model_directory = "/tmp/models/")
+    download_task0 = download_op(url = "https://download.pytorch.org/models/resnet18-5c106cde.pth", input = "")
+    download_task1 = download_op(url = "https://kubeflow-dataset.s3.us-east-2.amazonaws.com/properties.json", input = download_task0.outputs["output"])
+    download_task2 = download_op(url = "https://kubeflow-dataset.s3.us-east-2.amazonaws.com/index_to_name.json", input = download_task1.outputs["output"])
+    download_task3 = download_op(url = "https://kubeflow-dataset.s3.us-east-2.amazonaws.com/model.py", input = download_task2.outputs["output"])
+    list_item_task = list_item_op(directory = download_task3.outputs['output'])
+
+    model_archive_task = model_archive_op(model_directory = download_task3.outputs['output'])
+
+    list_item_task = list_item_op(directory = model_archive_task.outputs["output_directory"])
+
+    # deploy_model_task = deploy_model_op(
+	# 	action = 'create',
+	# 	model_name='pytorch',
+	# 	default_model_uri='gs://kfserving-samples/models/pytorch/cifar10/',
+	# 	namespace='admin',
+	# 	framework='pytorch',
+	# 	default_custom_model_spec='{}',
+	# 	canary_custom_model_spec='{}',
+	# 	autoscaling_target='0',
+	# 	kfserving_endpoint=''
+	# )
 
 if is_kfp:
     compiler.Compiler().compile(

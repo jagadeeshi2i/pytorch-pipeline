@@ -294,7 +294,7 @@ def train_model(
         verbose=True,
         monitor="val_loss",
         mode="min",
-        prefix="",
+        prefix=""
     )
 
     Path(tensorboard_root).mkdir(parents=True, exist_ok=True)
@@ -314,6 +314,7 @@ def train_model(
 
     trainer.fit(model, dm)
     trainer.test()
+    torch.save(model, os.path.join(model_save_path, 'resnet18-5c106cde.pth'))
 
     return checkpoint_callback.best_model_path
 

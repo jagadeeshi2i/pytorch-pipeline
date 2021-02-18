@@ -7,9 +7,10 @@ set -e
 BASE_PATH=$1
 EXPORT_PATH=$2
 echo $1
-MODEL_STORE=$BASE_PATH/model-store
+MODEL_STORE=$BASE_PATH
 CONFIG_PATH=$EXPORT_PATH/config
 
+mkdir -p $EXPORT_PATH
 touch $EXPORT_PATH/config.properties
 
 cat <<EOF > "$EXPORT_PATH"/config.properties
@@ -20,6 +21,7 @@ job_queue_size=100
 model_store="$MODEL_STORE"
 model_snapshot=
 EOF
+
 truncate -s -1 "$EXPORT_PATH"/config.properties
 
 CONFIG_PROPERTIES=$EXPORT_PATH/config.properties
@@ -45,29 +47,36 @@ jq -c '.[]' "$PROPERTIES_JSON" | while read -r i; do
     responseTimeout=$(echo "$i" | jq -r '."response-timeout"')
     marName=${modelName}.mar
     requirements=$(echo "$i" | jq -r '."requirements"')
-    updatedExtraFiles=$(echo "$extraFiles" | tr "," "\n" | awk -v modelName="$MODEL_STORE" -v modelFile="$modelName" '{ print modelName"/"modelFile"/"$1 }' | paste -sd "," -)
+    updatedExtraFiles=$(echo "$extraFiles" | tr "," "\n" | awk -v model_store=$MODEL_STORE '{ print model_store"/"$1 }' | paste -sd "," -)
     ########)#############################
     #### Support for custom handlers #####
     ######################################
     pyfile="$( cut -d '.' -f 2 <<< "$handler" )"
     if [ "$pyfile" == "py" ];
     then
-        handler="$MODEL_STORE/$modelName/$handler"
+        handler="$MODEL_STORE/$handler"
     fi
-    if [ -z "$modelFile" ]; then
-        if [ -z "$extraFiles" ]; then
-            torch-model-archiver --model-name "$modelName" --version "$version" --serialized-file "$MODEL_STORE/$modelName/$serializedFile" --export-path "$EXPORT_PATH" --handler "$handler" -r "$MODEL_STORE/$modelName/$requirements" --force
+    ## 
+    if [ -z "${requirements}" ];    # If requirements is empty string or unset
+    then
+        requirements="requirements.txt"
+        touch $EXPORT_PATH/$requirements
+    fi
+    if [ -n "${modelFile}" ];   # If modelFile is non empty string
+    then
+        if [ -n "${extraFiles}" ];  # If extraFiles is non empty string
+        then
+            torch-model-archiver --model-name "$modelName" --version "$version" --model-file "$MODEL_STORE/$modelFile" --serialized-file "$MODEL_STORE/$serializedFile" --export-path "$EXPORT_PATH" --extra-files "$updatedExtraFiles" --handler "$handler" -r "$EXPORT_PATH/$requirements" --force
         else
-            echo $updatedExtraFiles
-            echo $MODEL_STORE/$modelName/$serializedFile
-            echo $requirements
-            torch-model-archiver --model-name "$modelName" --version "$version" --serialized-file "$MODEL_STORE/$modelName/$serializedFile" --export-path "$EXPORT_PATH" --extra-files "$updatedExtraFiles" --handler "$handler" -r "$MODEL_STORE/$modelName/$requirements" --force
+            torch-model-archiver --model-name "$modelName" --version "$version" --model-file "$MODEL_STORE/$modelFile" --serialized-file "$MODEL_STORE/$serializedFile" --export-path "$EXPORT_PATH" --handler "$handler" -r "$EXPORT_PATH/$requirements" --force
         fi
     else
-        if [ -z "$extraFiles" ]; then
-            torch-model-archiver --model-name "$modelName" --version "$version" --model-file "$MODEL_STORE/$modelName/$modelFile" --serialized-file "$MODEL_STORE/$modelName/$serializedFile" --export-path "$EXPORT_PATH" --handler "$handler" -r "$MODEL_STORE/$modelName/$requirements" --force
+        echo Model file not present
+        if [ -n "${extraFiles}" ];  # If extraFiles is non empty string
+        then
+            torch-model-archiver --model-name "$modelName" --version "$version" --serialized-file "$MODEL_STORE/$serializedFile" --export-path "$EXPORT_PATH" --extra-files "$updatedExtraFiles" --handler "$handler" -r "$EXPORT_PATH/$requirements" --force
         else
-            torch-model-archiver --model-name "$modelName" --version "$version" --model-file "$MODEL_STORE/$modelName/$modelFile" --serialized-file "$MODEL_STORE/$modelName/$serializedFile" --export-path "$EXPORT_PATH" --extra-files "$updatedExtraFiles" --handler "$handler" -r "$MODEL_STORE/$modelName/$requirements" --force
+            torch-model-archiver --model-name "$modelName" --version "$version" --serialized-file "$MODEL_STORE/$serializedFile" --export-path "$EXPORT_PATH" --handler "$handler" -r "$EXPORT_PATH/$requirements" --force
         fi
     fi
     echo "{\"modelName\":{\"version\":{\"defaultVersion\":true,\"marName\":\"sample.mar\",\"minWorkers\":\"sampleminWorkers\",\"maxWorkers\":\"samplemaxWorkers\",\"batchSize\":\"samplebatchSize\",\"maxBatchDelay\":\"samplemaxBatchDelay\",\"responseTimeout\":\"sampleresponseTimeout\"}}}" | 
