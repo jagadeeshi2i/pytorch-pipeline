@@ -1,14 +1,14 @@
-name: Load Data
+name: Model Archiver
 inputs:
-- {name: model_directory, type: String}
+- {name: model_directory, type: Directory}
 outputs:
-  - {name: output_directory, type: String}
+  - {name: output_directory, type: Directory}
 metadata:
   annotations:
     author: Jagadeesh j <jagadeeshj@ideas2it.com>
 implementation:
   container:
-    image: __IAMGE_NAME__
+    image: jagadeeshj/model_archive_step:18-02-2021-14-30-11.695801
     command:
       - sh
       - -exc

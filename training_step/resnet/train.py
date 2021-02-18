@@ -45,7 +45,7 @@ def train_model(
     val_loader = torch.utils.data.DataLoader(val_set, batch_size =32, shuffle=True)
         
     checkpoint_callback = ModelCheckpoint(
-        filepath=os.path.join(checkpoint_root, 'weights.ckpt')
+        filepath=os.path.join(checkpoint_root, 'weights')
     )
 
     logger.log(logging.INFO, 'Starting training')
@@ -54,6 +54,7 @@ def train_model(
     max_epochs=1)
 
     trainer.fit(model, train_loader)
+    torch.save(model, os.path.join(checkpoint_root, 'resnet18-5c106cde.pth'))
 
     return checkpoint_callback.best_model_path
   
