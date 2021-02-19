@@ -1,22 +1,24 @@
 name: Model Archiver
 inputs:
-- {name: model_directory, type: Directory}
+- {name: properties, type: String}
+- {name: extraFiles, type: String, optional: true}
+- {name: modelFile, type: String, optional: true}
+- {name: serializedFile, type: String}
+- {name: handlerFile, type: String, optional: true}
+- {name: requirementsFile, type: String, optional: true}
 outputs:
-  - {name: output_directory, type: Directory}
-metadata:
-  annotations:
-    author: Jagadeesh j <jagadeeshj@ideas2it.com>
+  - {name: output_directory, type: String}
 implementation:
   container:
     image: __IMAGE_NAME__
-    command:
-      - sh
-      - -exc
-      - |
-        data_path="$0"
-        output_path="$1"
-  
-        /usr/local/bin/dockerd-entrypoint.sh "$data_path" "$output_path"
-      - inputPath: model_directory
-      - outputPath: output_directory
-  
+    command: ["sh", "/usr/local/bin/dockerd-entrypoint.sh"]
+
+    args: [
+        --output_path, {outputPath: output_directory},
+        --properties, {inputPath: properties},
+        --extrafiles, {inputPath: extraFiles},
+        --modelfile, {inputPath: modelFile},
+        --serializedfile, {inputPath: serializedFile},
+        --handlerfile, {inputPath: handlerFile},
+        --requirements, {inputPath: requirementsFile}
+    ]
