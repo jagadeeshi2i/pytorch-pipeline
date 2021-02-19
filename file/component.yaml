@@ -1,7 +1,7 @@
 name: List items
 description: Recursively list directory contents.
 inputs:
-- {name: Directory, type: Directory}
+- {name: Directory}
 outputs:
 - {name: Items}
 implementation:
