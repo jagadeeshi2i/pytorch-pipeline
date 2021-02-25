@@ -8,6 +8,7 @@ RUN apt-get update && \
     python3-distutils \
     python3-venv \
     curl \
+    wget \
     jq \
     && rm -rf /var/lib/apt/lists/* \
     && cd /tmp \
@@ -23,15 +24,8 @@ RUN update-alternatives --install /usr/local/bin/pip pip /usr/local/bin/pip3 1
 
 RUN pip install --no-cache-dir torch-model-archiver
 
-RUN useradd -m model-server
-
 # ADD "https://www.random.org/cgi-bin/randbyte?nbytes=10&format=h" skipcache
 
 COPY src/dockerd-entrypoint.sh /usr/local/bin/dockerd-entrypoint.sh
 
-RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh \
-    && chown -R model-server /home/model-server
-
-USER model-server
-WORKDIR /home/model-server
-
+RUN chmod +x /usr/local/bin/dockerd-entrypoint.sh
