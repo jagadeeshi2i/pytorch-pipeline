@@ -23,13 +23,14 @@ EXPORT_PATH=$OUTPUT_PATH
 mkdir -p "$EXPORT_PATH"
 
 download_file () {
-    if [[ $1 =~ ^(http|https):\/\/.* ]]; then
+    if [[ $1 =~ ^(http|https)://.* ]]; then
         wget "$1" -P "$2" --no-check-certificate
     fi
 }
 
 FILES=("$PROPERTIES" "$SERIALIZEDFILE" "$HANDLERFILE" "$MODELFILE" "$EXTRAFILES" "$REQUIREMENTS")
 
+echo "${INPUT_PATH}/properties.json"
 if [[ -f "${INPUT_PATH}/properties.json" ]];
 then
     cp -r "${INPUT_PATH}/." "$EXPORT_PATH"
@@ -58,7 +59,7 @@ model_snapshot=
 EOF
 
 CONFIG_PROPERTIES="${CONFIG_PATH}/config.properties"
-truncate -s -1 CONFIG_PROPERTIES
+truncate -s -1 "$CONFIG_PROPERTIES"
 
 PROPERTIES_JSON="${EXPORT_PATH}/properties.json"
 
@@ -88,7 +89,7 @@ jq -c '.[]' "$PROPERTIES_JSON" | while read -r i; do
     pyfile="$( cut -d '.' -f 2 <<< "$handler" )"
     if [ "$pyfile" == "py" ];
     then
-        handler="${HANDLERFILE}/${handler}"
+        handler="${EXPORT_PATH}/${handler}"
     fi
     ## 
     if [ -z "${requirements}" ];    # If requirements is empty string or unset
@@ -112,7 +113,7 @@ jq -c '.[]' "$PROPERTIES_JSON" | while read -r i; do
         fi
     fi
     echo "{\"modelName\":{\"version\":{\"defaultVersion\":true,\"marName\":\"sample.mar\",\"minWorkers\":\"sampleminWorkers\",\"maxWorkers\":\"samplemaxWorkers\",\"batchSize\":\"samplebatchSize\",\"maxBatchDelay\":\"samplemaxBatchDelay\",\"responseTimeout\":\"sampleresponseTimeout\"}}}" | 
-    jq -c --arg modelName "$modelName" --arg version "$version" --arg marName "$marName" --arg minWorkers "$minWorkers" --arg maxWorkers "$maxWorkers" --arg batchSize "$batchSize" --arg maxBatchDelay "$maxBatchDelay" --arg responseTimeout "$responseTimeout" '.[$modelName]=."modelName" | .[$modelName][$version]=.[$modelName]."version" | .[$modelName][$version]."marName"=$marName | .[$modelName][$version]."minWorkers"=$minWorkers | .[$modelName][$version]."maxWorkers"=$maxWorkers | .[$modelName][$version]."batchSize"=$batchSize | .[$modelName][$version]."maxBatchDelay"=$maxBatchDelay | .[$modelName][$version]."responseTimeout"=$responseTimeout | del(."modelName", .[$modelName]."version")'  >> $CONFIG_PROPERTIES
+    jq -c --arg modelName "$modelName" --arg version "$version" --arg marName "$marName" --arg minWorkers "$minWorkers" --arg maxWorkers "$maxWorkers" --arg batchSize "$batchSize" --arg maxBatchDelay "$maxBatchDelay" --arg responseTimeout "$responseTimeout" '.[$modelName]=."modelName" | .[$modelName][$version]=.[$modelName]."version" | .[$modelName][$version]."marName"=$marName | .[$modelName][$version]."minWorkers"=$minWorkers | .[$modelName][$version]."maxWorkers"=$maxWorkers | .[$modelName][$version]."batchSize"=$batchSize | .[$modelName][$version]."maxBatchDelay"=$maxBatchDelay | .[$modelName][$version]."responseTimeout"=$responseTimeout | del(."modelName", .[$modelName]."version")'  >> "$CONFIG_PROPERTIES"
     truncate -s -1 "$CONFIG_PROPERTIES"
 done
 sed -i 's/}{/,/g' "$CONFIG_PROPERTIES"
