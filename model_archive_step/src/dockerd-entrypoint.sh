@@ -50,11 +50,12 @@ touch "${CONFIG_PATH}/config.properties"
 
 
 cat <<EOF > "${CONFIG_PATH}/config.properties"
-inference_address=http://0.0.0.0:8080
+inference_address=http://0.0.0.0:8085
 management_address=http://0.0.0.0:8081
 number_of_netty_threads=4
 job_queue_size=100
-model_store="$MODEL_STORE"
+service_envelope=kfserving
+model_store="/mnt/models/model-store"
 model_snapshot=
 EOF
 
