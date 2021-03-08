@@ -357,7 +357,7 @@ def train_model(
         verbose=True,
         monitor="val_loss",
         mode="min",
-        prefix="",
+        prefix=""
     )
 
     if os.path.exists(os.path.join(tensorboard_root, "cifar10_lightning_kubeflow")):
@@ -380,6 +380,7 @@ def train_model(
 
     trainer.fit(model, dm)
     trainer.test()
+    torch.save(model, os.path.join(model_save_path, 'resnet18-5c106cde.pth'))
 
 
 if __name__ == "__main__":
