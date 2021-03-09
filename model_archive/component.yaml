@@ -11,7 +11,7 @@ outputs:
   - {name: output_directory, type: String}
 implementation:
   container:
-    image: jagadeeshj/model_archive_step:25-02-2021-16-53-37.388628
+    image: jagadeeshj/model_archive_step:kfpv1.0
     command: ["/usr/local/bin/dockerd-entrypoint.sh",
         "--output_path", {outputPath: output_directory},
         "--input_path", {inputPath: input_directory},

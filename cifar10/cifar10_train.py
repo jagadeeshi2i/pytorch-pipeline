@@ -191,8 +191,9 @@ class CIFAR10Classifier(pl.LightningModule):
             print("\n\nREFERENCE IMAGE!!!")
             print(self.reference_image.shape)
         x, y = train_batch
-        y_hat = self.forward(x)
-        loss = F.cross_entropy(y_hat, y)
+        output = self.forward(x)
+        _, y_hat = torch.max(output, dim=1)
+        loss = F.cross_entropy(output, y)
         self.log("train_loss", loss)
         self.train_acc(y_hat, y)
         self.log("train_acc", self.train_acc.compute())
@@ -201,8 +202,9 @@ class CIFAR10Classifier(pl.LightningModule):
     def test_step(self, test_batch, batch_idx):
 
         x, y = test_batch
-        y_hat = self.forward(x)
-        loss = F.cross_entropy(y_hat, y)
+        output = self.forward(x)
+        _, y_hat = torch.max(output, dim=1)
+        loss = F.cross_entropy(output, y)
         if self.args["accelerator"] is not None:
             self.log("test_loss", loss, sync_dist=True)
         else:
@@ -214,8 +216,9 @@ class CIFAR10Classifier(pl.LightningModule):
     def validation_step(self, val_batch, batch_idx):
 
         x, y = val_batch
-        y_hat = self.forward(x)
-        loss = F.cross_entropy(y_hat, y)
+        output = self.forward(x)
+        _, y_hat = torch.max(output, dim=1)
+        loss = F.cross_entropy(output, y)
         if self.args["accelerator"] is not None:
             self.log("val_loss", loss, sync_dist=True)
         else:
@@ -356,8 +359,7 @@ def train_model(
         save_top_k=1,
         verbose=True,
         monitor="val_loss",
-        mode="min",
-        prefix=""
+        mode="min"
     )
 
     if os.path.exists(os.path.join(tensorboard_root, "cifar10_lightning_kubeflow")):
@@ -372,15 +374,15 @@ def train_model(
     trainer = pl.Trainer(
         gpus=gpus,
         logger=tboard,
-        checkpoint_callback=checkpoint_callback,
+        checkpoint_callback=True,
         max_epochs=max_epochs,
-        callbacks=[lr_logger, early_stopping],
+        callbacks=[lr_logger, early_stopping, checkpoint_callback],
         accelerator=accelerator,
     )
 
     trainer.fit(model, dm)
     trainer.test()
-    torch.save(model, os.path.join(model_save_path, 'resnet18-5c106cde.pth'))
+    torch.save(model, os.path.join(model_save_path, 'resnet.pth'))
 
 
 if __name__ == "__main__":
