@@ -1,0 +1,10 @@
+boto3==1.14.12
+pytorch_lightning==1.1.8
+pyarrow
+sklearn
+transformers
+torchtext
+webdataset
+torchvision
+pandas
+numpy

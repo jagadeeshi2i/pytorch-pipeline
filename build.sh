@@ -11,34 +11,35 @@ python3 gen_image_timestamp.py > curr_time.txt
 export images_tag=$(cat curr_time.txt)
 echo ++++ Building component images with tag=$images_tag
 
-MODEL=resnet
+MODEL=cifar10
 
-for COMPONENT in training_step data_prep_step
-# for COMPONENT in training_step data_prep_step model_archiver_step
-for COMPONENT in model_archive_step
+cd ./pytorch
+
+full_image_name=jagadeeshj/testingbert:$images_tag
+
+echo IMAGE TO BUILD: $full_image_name
+
+#cp ../gcs_utils.py ./
+
+docker build -t $full_image_name .
+docker push $full_image_name
+
+for COMPONENT in data_prep train
 do
-    cd ./$COMPONENT/$MODEL
-
-    full_image_name=jagadeeshj/$COMPONENT:$images_tag
-
-    echo IMAGE TO BUILD: $full_image_name
-
-    #cp ../gcs_utils.py ./
-
-    docker build -t $full_image_name .
-    docker push $full_image_name
-
+    cd $COMPONENT
     sed -e "s|__IMAGE_NAME__|$full_image_name|g" component_template.yaml > component.yaml
     cat component.yaml 
 
-    cd ../..
+    cd ..
 done
+
+cd ..
 
 pwd
 echo
 echo Running pipeline compilation
 # python3 pipeline.py --target mp
-python3 pipeline.py --target kfp --model resnet
+python3 $MODEL/pipeline.py --target kfp --model $MODEL
 
 
 #echo 
