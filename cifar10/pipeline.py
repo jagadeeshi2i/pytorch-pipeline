@@ -83,7 +83,7 @@ def training(input_directory = "/pvc/input",
         "max_epochs": 1, "gpus": 0, "train_batch_size": None, "val_batch_size": None, "train_num_workers": 4, 
         "val_num_workers": 4 , "learning_rate": 0.001, 
         "accelerator": None}],
-        source_code = ["https://kubeflow-dataset.s3.us-east-2.amazonaws.com/cifar10_train.py"],
+        source_code = ["https://kubeflow-dataset.s3.us-east-2.amazonaws.com/cifar10_datamodule.py", "https://kubeflow-dataset.s3.us-east-2.amazonaws.com/cifar10_train.py"],
         source_code_path = ["/pvc/input"]
     ).add_pvolumes({"/pvc":vop.volume}).after(prep_output)
 
@@ -91,58 +91,59 @@ def training(input_directory = "/pvc/input",
 
     properties = download(url='https://kubeflow-dataset.s3.us-east-2.amazonaws.com/model_archive/properties.json', output_path="/pv/input").add_pvolumes({"/pv":vop.volume}).after(vop)
     index_to_name = download(url='https://kubeflow-dataset.s3.us-east-2.amazonaws.com/model_archive/index_to_name.json', output_path="/pv/input").add_pvolumes({"/pv":vop.volume}).after(vop)
+    requirements = download(url='https://kubeflow-dataset.s3.us-east-2.amazonaws.com/model_archive/requirements.txt', output_path="/pv/input").add_pvolumes({"/pv":vop.volume}).after(vop)
 
     copy_files = copy_contents(input_dir="/pvc/output/train/models", output_dir="/pvc/input").add_pvolumes({"/pvc":vop.volume}).after(train_output)
     list_input = ls("/pvc/input").add_pvolumes({"/pvc":vop.volume}).after(copy_files)
 
-    # mar_task = dsl.ContainerOp(
-    #     name='mar_gen',
-    #     image='jagadeeshj/model_archive_step:kfpv1.0',
-    #     command=["/usr/local/bin/dockerd-entrypoint.sh"],
-    #     arguments=[
-    #         "--output_path", output_directory,
-    #         "--input_path", input_directory,
-    #         "--handlerfile", handlerFile
-    #     ],
-    #     pvolumes={"/pvc": vop.volume}).after(list_input)
-
-    # list_output = ls("/pvc/output").add_pvolumes({"/pvc":vop.volume}).after(mar_task)
-
-    # deploy = deploy_op(
-    #     action="create", 
-    #     model_name="torchserve", 
-    #     model_uri="pvc://{{workflow.name}}-pvcm/output", 
-    #     namespace='admin',
-    #     framework='pytorch'
-    # ).after(list_output)
-
-    op_task = dsl.ContainerOp(
-        name='main',
-        image="quay.io/aipipeline/kfserving-component:v0.5.0",
-        command=['python'],
+    mar_task = dsl.ContainerOp(
+        name='mar_gen',
+        image='jagadeeshj/model_archive_step:kfpv1.2',
+        command=["/usr/local/bin/dockerd-entrypoint.sh"],
         arguments=[
-          "-u", "kfservingdeployer.py",
-          "--action", "apply",
-          "--model-name", "torchserve",
-          "--model-uri", "pvc://{{workflow.name}}-%s/input" % volume_name,
-          "--namespace", "%s" % namespace,
-          "--framework", "pytorch",
+            "--output_path", output_directory,
+            "--input_path", input_directory,
+            "--handlerfile", handlerFile
         ],
-        pvolumes={"/pvc": vop.volume},
-        # pass in init_container list
-        init_containers=[
-            dsl.UserContainer(
-                name='init',
-                image='jagadeeshj/model_archive_step:kfpv1.0',
-                command=["/usr/local/bin/dockerd-entrypoint.sh"],
-                args=[
-                    "--output_path", output_directory,
-                    "--input_path", input_directory,
-                    "--handlerfile", handlerFile
-                ],
-                mirror_volume_mounts=True,),
-        ],
-    ).after(list_input)
+        pvolumes={"/pvc": vop.volume}).after(list_input)
+
+    list_output = ls("/pvc/output").add_pvolumes({"/pvc":vop.volume}).after(mar_task)
+
+    deploy = deploy_op(
+        action="create", 
+        model_name="torchserve", 
+        model_uri="pvc://{{workflow.name}}-pvcm/output", 
+        namespace='admin',
+        framework='pytorch'
+    ).after(list_output)
+
+    # op_task = dsl.ContainerOp(
+    #     name='main',
+    #     image="quay.io/aipipeline/kfserving-component:v0.5.0",
+    #     command=['python'],
+    #     arguments=[
+    #       "-u", "kfservingdeployer.py",
+    #       "--action", "apply",
+    #       "--model-name", "torchserve",
+    #       "--model-uri", "pvc://{{workflow.name}}-%s/input" % volume_name,
+    #       "--namespace", "%s" % namespace,
+    #       "--framework", "pytorch",
+    #     ],
+    #     pvolumes={"/pvc": vop.volume},
+    #     # pass in init_container list
+    #     init_containers=[
+    #         dsl.UserContainer(
+    #             name='init',
+    #             image='jagadeeshj/model_archive_step:kfpv1.0',
+    #             command=["/usr/local/bin/dockerd-entrypoint.sh"],
+    #             args=[
+    #                 "--output_path", output_directory,
+    #                 "--input_path", input_directory,
+    #                 "--handlerfile", handlerFile
+    #             ],
+    #             mirror_volume_mounts=True,),
+    #     ],
+    # ).after(list_input)
 
 
 if __name__ == "__main__":

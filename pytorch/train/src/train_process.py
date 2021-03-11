@@ -50,7 +50,8 @@ class PytorchTrainComponent(PytorchComponent):
         if inputs.source_code:
             print("Inside source code block!!!")
             print(inputs.source_code[0])
-            download_from_url(inputs.source_code[0], root=inputs.source_code_path[0])
+            for i in inputs.source_code:
+                download_from_url(i, root=inputs.source_code_path[0])
             print("download successfull")
 
             entry_point=["ls", "-R", "/pvc/input"]

@@ -55,7 +55,8 @@ management_address=http://0.0.0.0:8081
 number_of_netty_threads=4
 job_queue_size=100
 service_envelope=kfserving
-model_store="/mnt/models/model-store"
+install_py_dep_per_model=true
+model_store=/mnt/models/model-store
 model_snapshot=
 EOF
 
