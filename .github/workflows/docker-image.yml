@@ -22,9 +22,12 @@ jobs:
       id: docker_build
       uses: docker/build-push-action@v2
       with:
-        context: ./pytorch/
+        context: ./pytorch
         push: true
-        tags: jagadeeshj/pytorch-pipeline:latest
+        file: ${{ context }}/Dockerfile
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:latest
+        cache-from: type=registry,ref=${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:latest
+        cache-to: type=inline
     -
       name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
