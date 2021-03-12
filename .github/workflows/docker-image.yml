@@ -24,7 +24,7 @@ jobs:
       with:
         context: ./pytorch
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:latest
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:$(date +%s)
     -
       name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
