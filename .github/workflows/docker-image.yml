@@ -1,9 +1,7 @@
 name: Docker Image CI
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  release:
+    types: [ published ]
 jobs:
   build:
     runs-on: self-hosted
@@ -17,10 +15,6 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}    
-    - 
-      name: Set Env
-      shell: bash
-      run: echo "TAG=$(date +%s)" >> $GITHUB_ENV
     -
       name: Build and push
       id: docker_build
@@ -28,7 +22,7 @@ jobs:
       with:
         context: ./pytorch
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:${{ env.TAG }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:latest
     -
       name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
