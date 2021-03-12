@@ -15,6 +15,12 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_HUB_USERNAME }}
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}    
+    - name: Set env
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Test
+      run: |
+        echo $RELEASE_VERSION
+        echo ${{ env.RELEASE_VERSION }}
     -
       name: Build and push
       id: docker_build
@@ -22,7 +28,7 @@ jobs:
       with:
         context: ./pytorch
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:latest
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/pytorch-pipeline:${{ env.RELEASE_VERSION }}
     -
       name: Image digest
       run: echo ${{ steps.docker_build.outputs.digest }}
