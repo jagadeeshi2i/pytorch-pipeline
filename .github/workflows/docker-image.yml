@@ -19,7 +19,7 @@ jobs:
         password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}    
     - 
       shell: bash
-      run: tag=date +%s
+      run: tag=$(date +%s)
     -
       name: Build and push
       id: docker_build
